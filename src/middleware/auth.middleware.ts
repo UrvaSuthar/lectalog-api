@@ -1,8 +1,17 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { AppError } from '../utils/AppError';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient, User } from '@supabase/supabase-js';
 
-export const authMiddleware = (supabase: SupabaseClient) => {
+// Extend Express Request type to include user
+declare global {
+  namespace Express {
+    interface Request {
+      user?: User;
+    }
+  }
+}
+
+export const authMiddleware = (supabase: SupabaseClient): RequestHandler => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const authHeader = req.headers.authorization;
