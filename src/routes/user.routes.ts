@@ -1,22 +1,34 @@
 import { Router } from 'express';
 import { UserController } from '../controllers/user.controller';
+import { validateUser } from '../validators/user.validator';
+import { createUserSchema, updateUserSchema } from '../validators/user.validator';
+import { authMiddleware } from '../middleware/auth.middleware';
+import { SupabaseClient } from '@supabase/supabase-js';
 
-export function createUserRoutes(userController: UserController): Router {
+export function createUserRoutes(
+  userController: UserController,
+  supabase: SupabaseClient
+): Router {
   const router = Router();
+  const auth = authMiddleware(supabase);
 
-  // Create a new user
-  router.post('/', (req, res) => userController.createUser(req, res));
+  // Public routes
+  router.post(
+    '/',
+    validateUser(createUserSchema),
+    (req, res) => userController.createUser(req, res)
+  );
 
-  // Get all users
+  // Protected routes
+  router.use(auth); // Apply auth middleware to all routes below
+
   router.get('/', (req, res) => userController.getAllUsers(req, res));
-
-  // Get user by ID
   router.get('/:id', (req, res) => userController.getUserById(req, res));
-
-  // Update user
-  router.put('/:id', (req, res) => userController.updateUser(req, res));
-
-  // Delete user
+  router.put(
+    '/:id',
+    validateUser(updateUserSchema),
+    (req, res) => userController.updateUser(req, res)
+  );
   router.delete('/:id', (req, res) => userController.deleteUser(req, res));
 
   return router;
